@@ -1,3 +1,8 @@
+package model;
+
+import exceptions.MineUncoveredException;
+import model.Coordinate;
+
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -15,16 +20,22 @@ public class Board
 
 
     final int rows;
-    final int columns;
+    public final int columns;
     final int mines;
 
 
-    private final List<List<Square>> squaresList = new LinkedList<>();
+    private List<List<Square>> squaresList;
     private Square[][] squaresArray;
 
     public Square getSquareAtCoordinate(Coordinate coordinate)
     {
-        return squaresArray[coordinate.row][coordinate.column];
+        try
+        {
+            return squaresArray[coordinate.row][coordinate.column];
+        }catch(ArrayIndexOutOfBoundsException e)
+        {
+            return null;
+        }
     }
 
     public Iterator<List<Square>> getRowIterator(){
@@ -47,13 +58,15 @@ public class Board
         squaresArray = new Square[rows][columns];
 
         // LinkedLists - for fast square-by-square iteration
+        squaresList = new LinkedList<>();
+
         for (int i = 0; i < rows; i++) {
 
             final List<Square> rowList = new LinkedList<>();
             squaresList.add(rowList);
 
-            for (int j = 0; j < columns; j++) {
-
+            for (int j = 0; j < columns; j++)
+            {
                 final Coordinate coordinate = new Coordinate(i, j);
                 final Square square = new Square(coordinate);
 
@@ -61,6 +74,8 @@ public class Board
                 rowList.add(square);
             }
         }
+
+
     }
 
     private void addNeighborsToSquares() {
@@ -100,7 +115,7 @@ public class Board
         neighborCoordinates.forEach(c ->
         {
             final Square neighbor = getSquareAtCoordinate(c);
-            square.addNeighbor(neighbor);
+            if(neighbor != null) square.addNeighbor(neighbor);
         });
     }
 
@@ -111,25 +126,43 @@ public class Board
     }
 
     private Coordinate indexToCoordinate(int i) {
-        return new Coordinate(i / rows, i % columns);
+        return new Coordinate(i / columns, i % columns);
     }
 
     private void addMines()
     {
-        final Set<Integer> indexes = new HashSet<Integer>(IntStream.range(0, (rows * columns) - 1).boxed().toList());
+        // New array from 0 to end of grid
+        final List<Integer> indexes = new ArrayList<>(IntStream.range(0, rows * columns).boxed().toList());
 
-/*        // Get a random subset of existing locations
-        final List<String> locations = new ArrayList<String>(squaresArray.keySet());
-        Collections.shuffle(locations);
-        final Set<String> randomLocations = new HashSet<String>(locations.subList(0, mines - 1));
+        // Get a random subset of these indices
+        Collections.shuffle(indexes);
+        final Set<Integer> randomIndices = new HashSet<Integer>(indexes.subList(0, mines - 1));
 
-        // Add mine
-        for(String location : randomLocations)
+        System.out.println("rows: " + rows + ", cols: " + columns);
+
+        // Add mines at those indices
+        for(int index : randomIndices)
         {
-            final Square square = getSquareAtCoordinate(location);
+            final Coordinate coordinate = indexToCoordinate(index);
+
+            System.out.println(index);
+            System.out.println(coordinate);
+
+
+            final Square square = getSquareAtCoordinate(coordinate);
             square.setHasMine(true);
-        }*/
+
+        }
     }
 
 
+    public void selectSquare(Coordinate coordinate) throws MineUncoveredException {
+        System.out.println("Selecting " + coordinate);
+        final Square square = getSquareAtCoordinate(coordinate);
+        square.select();
+    }
+
+    public void reset() {
+        generateBoard();
+    }
 }

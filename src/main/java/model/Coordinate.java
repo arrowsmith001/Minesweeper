@@ -1,3 +1,4 @@
+package model;
 
 public class Coordinate {
     public int row;
@@ -8,4 +9,8 @@ public class Coordinate {
         this.column = col;
     }
 
+    @Override
+    public String toString() {
+        return "row: " + row + ", column: " + column;
+    }
 }
